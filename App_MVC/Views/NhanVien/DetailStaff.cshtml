@@ -1,0 +1,131 @@
+﻿@model App_Data.Models.staff
+
+@{
+    ViewData["Title"] = "Chi Tiết Nhân Viên";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 class="mb-4">@ViewData["Title"]</h2>
+
+<!-- Hiển thị thông tin nhân viên -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Thông Tin Nhân Viên</h5>
+    </div>
+    <div class="card-body">
+        <p><strong>Tên:</strong> @Model.Name</p>
+        <p><strong>Mã nhân viên:</strong> @Model.StaffCode</p>
+        <p><strong>Trạng thái:</strong> @(Model.Status == 1 ? "Đang hoạt động" : "Ngừng hoạt động")</p>
+    </div>
+</div>
+
+<!-- Danh sách bộ môn chuyên ngành -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Bộ Môn Chuyên Ngành</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Bộ Môn - Cơ Sở</th>
+                    <th>Chuyên Ngành</th>
+                    <th>Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var smf in Model.StaffMajorFacilities)
+                {
+                    var majorFacility = smf.IdMajorFacilityNavigation;
+                    var majorName = majorFacility?.IdMajorNavigation?.Name ?? "Không có dữ liệu";
+                    var facilityName = majorFacility?.IdDepartmentFacilityNavigation?.IdFacilityNavigation?.Name ?? "Không có dữ liệu";
+
+                    <tr>
+                        <td>@facilityName</td>
+                        <td>@majorName</td>
+                        <td>
+                            <a asp-action="RemoveMajorFacility" asp-route-staffId="@Model.Id" asp-route-majorFacilityId="@majorFacility.Id" class="btn btn-danger btn-sm">Xóa</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Form Thêm Bộ Môn Chuyên Ngành -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Thêm Bộ Môn Chuyên Ngành</h5>
+    </div>
+    <div class="card-body">
+        <form asp-action="AddMajorFacility" method="post">
+            <input type="hidden" name="staffId" value="@Model.Id" />
+
+            <div class="form-group mb-3">
+                <label for="facilityId">Cơ Sở</label>
+                <select id="facilityId" name="facilityId" class="form-control">
+                    <option value="">-- Chọn Cơ Sở --</option>
+                    @foreach (var facility in ViewData["Facilities"] as List<App_Data.Models.Facility>)
+                    {
+                        <option value="@facility.Id">@facility.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="majorFacilityId">Bộ Môn</label>
+                <select id="majorFacilityId" name="majorFacilityId" class="form-control">
+                    <option value="">-- Chọn Bộ Môn --</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="majorId">Chuyên Ngành</label>
+                <select id="majorId" name="majorId" class="form-control">
+                    <option value="">-- Chọn Chuyên Ngành --</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Thêm</button>
+            <a asp-action="Index" class="btn btn-secondary">Trở về</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#facilityId').change(function () {
+                var facilityId = $(this).val();
+                if (facilityId) {
+                    $.get('@Url.Action("GetMajorFacilities", "NhanVien")', { facilityId: facilityId }, function (data) {
+                        $('#majorFacilityId').empty().append('<option value="">-- Chọn Bộ Môn --</option>');
+                        $.each(data, function (index, item) {
+                            $('#majorFacilityId').append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+                        $('#majorId').empty().append('<option value="">-- Chọn Chuyên Ngành --</option>');
+                    });
+                } else {
+                    $('#majorFacilityId').empty().append('<option value="">-- Chọn Bộ Môn --</option>');
+                    $('#majorId').empty().append('<option value="">-- Chọn Chuyên Ngành --</option>');
+                }
+            });
+
+            $('#majorFacilityId').change(function () {
+                var majorFacilityId = $(this).val();
+                if (majorFacilityId) {
+                    $.get('@Url.Action("GetMajors", "NhanVien")', { majorFacilityId: majorFacilityId }, function (data) {
+                        $('#majorId').empty().append('<option value="">-- Chọn Chuyên Ngành --</option>');
+                        $.each(data, function (index, item) {
+                            $('#majorId').append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+                    });
+                } else {
+                    $('#majorId').empty().append('<option value="">-- Chọn Chuyên Ngành --</option>');
+                }
+            });
+        });
+    </script>
+}
