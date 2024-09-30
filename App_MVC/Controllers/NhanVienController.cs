@@ -475,6 +475,15 @@ namespace App_MVC.Controllers
             return View(importHistories);
         }
 
+        [HttpGet]
+        public IActionResult aaaaaaImportHistory()
+        {
+            var importHistories = db.ImportHistories
+            .OrderByDescending(h => h.ImportDate)
+            .ToList();
+            return View(importHistories);
+        }
+
         public long ToUnixTimestamp(DateTime dateTime)
         {
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
